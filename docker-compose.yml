@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fixitnow-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: fixitnow
+      POSTGRES_PASSWORD: fixitnow123
+      POSTGRES_DB: fixitnow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fixitnow-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fixitnow-backend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://fixitnow:fixitnow123@postgres:5432/fixitnow?schema=public
+      JWT_SECRET: your-secret-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      - postgres
+    networks:
+      - fixitnow-network
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+
+volumes:
+  postgres_data:
+
+networks:
+  fixitnow-network:
+    driver: bridge
