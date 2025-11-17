@@ -17,6 +17,8 @@ export class BookingsController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.CONSUMER)
   create(@GetUser('id') userId: string, @Body() createBookingDto: CreateBookingDto) {
+    console.log('📅 Creating booking for user:', userId);
+    console.log('📋 Booking data received:', JSON.stringify(createBookingDto, null, 2));
     return this.bookingsService.create(userId, createBookingDto);
   }
 

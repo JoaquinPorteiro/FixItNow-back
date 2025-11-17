@@ -13,6 +13,7 @@ import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -30,8 +31,8 @@ export class ServicesController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  findAll(@GetUser('id') userId: string, @GetUser('role') userRole: UserRole) {
+  @UseGuards(OptionalJwtAuthGuard)
+  findAll(@GetUser('id') userId?: string, @GetUser('role') userRole?: UserRole) {
     return this.servicesService.findAll(userId, userRole);
   }
 

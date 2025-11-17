@@ -45,8 +45,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  services Service[] @relation("ProviderServices")
-  bookings Booking[] @relation("ConsumerBookings")
+  services     Service[] @relation("ProviderServices")
+  bookings     Booking[] @relation("ConsumerBookings")
+  sentMessages Message[] @relation("UserMessages")
 
   @@map("users")
 }
@@ -97,8 +98,24 @@ model Booking {
   updatedAt  DateTime      @updatedAt
 
   // Relations
-  service  Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  consumer User    @relation("ConsumerBookings", fields: [consumerId], references: [id], onDelete: Cascade)
+  service  Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  consumer User      @relation("ConsumerBookings", fields: [consumerId], references: [id], onDelete: Cascade)
+  messages Message[]
 
   @@map("bookings")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  bookingId String
+  senderId  String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sender  User    @relation("UserMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
 }

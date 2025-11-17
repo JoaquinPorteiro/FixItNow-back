@@ -71,59 +71,64 @@ Comandos disponibles:
 EOF
 }
 
+# Detectar ubicación del docker-compose.yml
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_COMPOSE_FILE="${SCRIPT_DIR}/../docker-compose.yml"
+DOCKER_COMPOSE_CMD="docker-compose -f ${DOCKER_COMPOSE_FILE}"
+
 # Comandos Docker
 cmd_up() {
     print_info "Levantando backend..."
-    docker-compose up -d backend
+    ${DOCKER_COMPOSE_CMD} up -d app
     print_success "Backend iniciado"
     print_info "Backend API: http://localhost:3000"
 }
 
 cmd_down() {
     print_info "Deteniendo backend..."
-    docker-compose stop backend
+    ${DOCKER_COMPOSE_CMD} stop app
     print_success "Backend detenido"
 }
 
 cmd_build() {
     print_info "Reconstruyendo imagen del backend..."
-    docker-compose build --no-cache backend
+    ${DOCKER_COMPOSE_CMD} build --no-cache app
     print_success "Imagen reconstruida"
 }
 
 cmd_rebuild() {
     print_info "Rebuild completo: stop -> build -> up..."
-    docker-compose stop backend
-    docker-compose build --no-cache backend
-    docker-compose up -d backend
+    ${DOCKER_COMPOSE_CMD} stop app
+    ${DOCKER_COMPOSE_CMD} build --no-cache app
+    ${DOCKER_COMPOSE_CMD} up -d app
     print_success "Backend reconstruido y levantado"
 }
 
 cmd_logs() {
-    docker-compose logs -f backend
+    ${DOCKER_COMPOSE_CMD} logs -f app
 }
 
 cmd_restart() {
     print_info "Reiniciando backend..."
-    docker-compose restart backend
+    ${DOCKER_COMPOSE_CMD} restart app
     print_success "Backend reiniciado"
 }
 
 cmd_shell() {
     print_info "Abriendo shell en backend..."
-    docker-compose exec backend sh
+    ${DOCKER_COMPOSE_CMD} exec app sh
 }
 
 # Comandos de Base de Datos
 cmd_migrate() {
     print_info "Creando y aplicando migraciones..."
-    docker-compose exec backend npx prisma migrate dev
+    ${DOCKER_COMPOSE_CMD} exec app npx prisma migrate dev
     print_success "Migraciones aplicadas"
 }
 
 cmd_migrate_deploy() {
     print_info "Aplicando migraciones en producción..."
-    docker-compose exec backend npx prisma migrate deploy
+    ${DOCKER_COMPOSE_CMD} exec app npx prisma migrate deploy
     print_success "Migraciones aplicadas"
 }
 
@@ -132,7 +137,7 @@ cmd_migrate_reset() {
     read -p "¿Estás seguro? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker-compose exec backend npx prisma migrate reset
+        ${DOCKER_COMPOSE_CMD} exec app npx prisma migrate reset
         print_success "Base de datos reseteada"
     else
         print_info "Operación cancelada"
@@ -141,18 +146,18 @@ cmd_migrate_reset() {
 
 cmd_seed() {
     print_info "Ejecutando seeds..."
-    docker-compose exec backend node prisma/seed.js
+    ${DOCKER_COMPOSE_CMD} exec app node prisma/seed.js
     print_success "Seeds completados"
 }
 
 cmd_studio() {
     print_info "Abriendo Prisma Studio..."
-    docker-compose exec backend npx prisma studio
+    ${DOCKER_COMPOSE_CMD} exec app npx prisma studio
 }
 
 cmd_db_shell() {
     print_info "Conectando a PostgreSQL..."
-    docker-compose exec postgres psql -U postgres -d fixitnow
+    ${DOCKER_COMPOSE_CMD} exec postgres psql -U fixitnow -d fixitnow
 }
 
 # Desarrollo Local (sin Docker)
@@ -193,14 +198,14 @@ cmd_status() {
     print_header "Estado del Backend"
     echo ""
     echo "Contenedores:"
-    docker-compose ps backend postgres
+    ${DOCKER_COMPOSE_CMD} ps app postgres
     echo ""
     echo "Última migración:"
-    docker-compose exec backend npx prisma migrate status 2>/dev/null || echo "No disponible"
+    ${DOCKER_COMPOSE_CMD} exec app npx prisma migrate status 2>/dev/null || echo "No disponible"
 }
 
 cmd_ps() {
-    docker-compose ps
+    ${DOCKER_COMPOSE_CMD} ps
 }
 
 # Main
