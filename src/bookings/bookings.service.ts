@@ -306,6 +306,46 @@ export class BookingsService {
     });
   }
 
+  async getServiceBookings(serviceId: string, date?: string) {
+    // Verify service exists
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+    });
+
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    // Build where clause
+    const where: any = {
+      serviceId,
+      status: {
+        in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
+      },
+    };
+
+    // Filter by date if provided
+    if (date) {
+      const bookingDate = new Date(date);
+      where.date = bookingDate;
+    }
+
+    // Get bookings - only return minimal info (no consumer details)
+    const bookings = await this.prisma.booking.findMany({
+      where,
+      select: {
+        id: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+      },
+      orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+    });
+
+    return bookings;
+  }
+
   private getDayOfWeek(date: Date): DayOfWeek {
     const dayNumber = date.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday (using UTC)
     const days: DayOfWeek[] = [
