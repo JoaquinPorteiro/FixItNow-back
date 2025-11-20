@@ -194,6 +194,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Broadcast to all clients in the room (including sender)
       this.server.to(roomName).emit('new_message', message);
 
+      // ALSO emit to all participant sockets (consumer and provider) even if they're not in the room
+      // This ensures notifications work even when users are in different chats
+      const bookingDetails = await this.chatService.getBookingDetails(bookingId, userId);
+
+      if (bookingDetails) {
+        const participantIds = [
+          bookingDetails.consumerId,
+          bookingDetails.service.providerId,
+        ];
+
+        // Emit to all sockets of all participants, BUT only if they're NOT already in the room
+        // This prevents duplicate messages for users who are actively in the chat
+        for (const participantId of participantIds) {
+          const socketIds = this.userSockets.get(participantId);
+          if (socketIds) {
+            for (const socketId of socketIds) {
+              const socket = this.server.sockets.sockets.get(socketId);
+              // Only emit if socket exists and is NOT already in the room
+              if (socket && !socket.rooms.has(roomName)) {
+                this.server.to(socketId).emit('new_message', message);
+              }
+            }
+          }
+        }
+      }
+
       this.logger.log(`Message sent in booking ${bookingId} by user ${userId}`);
 
       return { success: true, message };
